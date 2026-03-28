@@ -65,6 +65,15 @@ func (c *PTYController) CreatePTYSession() {
 
 // GetPTYSessionStatus handles GET /pty/:sessionId.
 func (c *PTYController) GetPTYSessionStatus() {
+	if !runtime.IsPTYSessionSupported() {
+		c.RespondError(
+			http.StatusNotImplemented,
+			model.ErrorCodeNotSupported,
+			"pty sessions are not supported on this platform",
+		)
+		return
+	}
+
 	id := c.ctx.Param("sessionId")
 	if id == "" {
 		c.RespondError(
@@ -102,6 +111,15 @@ func (c *PTYController) GetPTYSessionStatus() {
 
 // DeletePTYSession handles DELETE /pty/:sessionId.
 func (c *PTYController) DeletePTYSession() {
+	if !runtime.IsPTYSessionSupported() {
+		c.RespondError(
+			http.StatusNotImplemented,
+			model.ErrorCodeNotSupported,
+			"pty sessions are not supported on this platform",
+		)
+		return
+	}
+
 	id := c.ctx.Param("sessionId")
 	if id == "" {
 		c.RespondError(

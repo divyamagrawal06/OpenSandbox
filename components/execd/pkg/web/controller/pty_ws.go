@@ -49,8 +49,7 @@ const (
 //  2. Acquire exclusive WS lock → 409 if already held
 //  3. Upgrade HTTP → WebSocket
 //  4. Start bash if not already running
-//  5. Snapshot replay buffer BEFORE AttachOutput (prevents duplicate delivery)
-//  6. AttachOutput (live pipe now active)
+//  5+6. AtomicAttachOutputWithSnapshot (snapshot + attach under outMu — no loss window)
 //  7. defer: detach → pumpWg.Wait → UnlockWS
 //  8. Send replay frame if snapshot non-empty
 //  9. Send connected frame
@@ -116,11 +115,10 @@ func PTYSessionWebSocket(ctx *gin.Context) {
 		}
 	}
 
-	// 5. Snapshot replay buffer BEFORE attaching live pipe.
-	snapshotBytes, snapshotOffset := session.ReplayBuffer().ReadFrom(since)
-
-	// 6. Attach per-connection output pipe — live sink is now active.
-	stdoutR, stderrR, detach := session.AttachOutput()
+	// 5+6. Atomically snapshot replay buffer and attach live pipe — eliminates the
+	//      output-loss window where bytes written between ReadFrom and AttachOutput
+	//      would be dropped by fanout (stdoutW still nil) yet missed by snapshot.
+	stdoutR, stderrR, detach, snapshotBytes, snapshotOffset := session.AttachOutputWithSnapshot(since)
 
 	// 7. Deferred cleanup order: detach writers → wait for pump goroutines → unlock WS.
 	var pumpWg sync.WaitGroup

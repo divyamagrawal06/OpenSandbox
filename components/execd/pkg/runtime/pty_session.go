@@ -247,9 +247,7 @@ func (s *ptySession) broadcastPTY() {
 	for {
 		n, err := s.ptmx.Read(buf)
 		if n > 0 {
-			chunk := buf[:n]
-			s.replay.write(chunk)
-			s.fanout(chunk, true)
+			s.writeAndFanout(buf[:n], true)
 		}
 		if err != nil {
 			// EIO or EOF when the child exits — normal termination
@@ -264,9 +262,7 @@ func (s *ptySession) broadcastPipe(r *os.File, isStdout bool) {
 	for {
 		n, err := r.Read(buf)
 		if n > 0 {
-			chunk := buf[:n]
-			s.replay.write(chunk)
-			s.fanout(chunk, isStdout)
+			s.writeAndFanout(buf[:n], isStdout)
 		}
 		if err != nil {
 			break
@@ -275,10 +271,15 @@ func (s *ptySession) broadcastPipe(r *os.File, isStdout bool) {
 	_ = r.Close()
 }
 
-// fanout delivers chunk to the current per-connection PipeWriter (if any).
-// If isStdout is false, it targets stderrW instead.
-func (s *ptySession) fanout(chunk []byte, isStdout bool) {
+// writeAndFanout writes chunk to the replay buffer and delivers it to the
+// active per-connection pipe, atomically under outMu.
+//
+// Holding outMu across both operations closes the window where bytes written
+// to replay after ReadFrom but before AttachOutput would be silently dropped.
+// Lock order is always outMu → replay.mu (both paths), so no deadlock is possible.
+func (s *ptySession) writeAndFanout(chunk []byte, isStdout bool) {
 	s.outMu.Lock()
+	s.replay.write(chunk) // acquires replay.mu inside (outMu → replay.mu)
 	var w *io.PipeWriter
 	if isStdout {
 		w = s.stdoutW
@@ -390,6 +391,47 @@ func (s *ptySession) AttachOutput() (io.Reader, io.Reader, func()) {
 		_ = stderrW.Close()
 	}
 	return stdoutR, stderrR, detach
+}
+
+// AttachOutputWithSnapshot atomically snapshots the replay buffer and attaches
+// the per-connection output pipe, eliminating the output-loss window that exists
+// when ReadFrom and AttachOutput are called separately.
+//
+// Must be used together with writeAndFanout (which holds outMu during both
+// replay.write and the fanout pointer read).
+//
+// Lock order is always outMu → replay.mu (both paths), so no deadlock is possible.
+//
+// Returns (stdoutR, stderrR [nil in PTY mode], detach, snapshotBytes, snapshotOffset).
+func (s *ptySession) AttachOutputWithSnapshot(since int64) (io.Reader, io.Reader, func(), []byte, int64) {
+	stdoutR, stdoutW := io.Pipe()
+	var stderrR io.Reader
+	var stderrW *io.PipeWriter
+	if !s.isPTY {
+		stderrR, stderrW = io.Pipe()
+	}
+
+	s.outMu.Lock()
+	snapshotBytes, snapshotOffset := s.replay.ReadFrom(since) // acquires replay.mu inside
+	s.stdoutW = stdoutW
+	if stderrW != nil {
+		s.stderrW = stderrW
+	}
+	s.outMu.Unlock()
+
+	detach := func() {
+		s.outMu.Lock()
+		s.stdoutW = nil
+		if stderrW != nil {
+			s.stderrW = nil
+		}
+		s.outMu.Unlock()
+		_ = stdoutW.Close()
+		if stderrW != nil {
+			_ = stderrW.Close()
+		}
+	}
+	return stdoutR, stderrR, detach, snapshotBytes, snapshotOffset
 }
 
 // SendSignal sends the named signal to the process group.

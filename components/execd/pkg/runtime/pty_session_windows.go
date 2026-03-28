@@ -63,5 +63,8 @@ func (s *ptySession) StartPTY() error                                   { return
 func (s *ptySession) StartPipe() error                                  { return errPTYSessionNotSupported }
 func (s *ptySession) WriteStdin(_ []byte) (int, error)                  { return 0, errPTYSessionNotSupported }
 func (s *ptySession) AttachOutput() (io.Reader, io.Reader, func()) { return nil, nil, func() {} }
+func (s *ptySession) AttachOutputWithSnapshot(_ int64) (io.Reader, io.Reader, func(), []byte, int64) {
+	return nil, nil, func() {}, nil, 0
+}
 func (s *ptySession) SendSignal(_ string)                               {}
 func (s *ptySession) ResizePTY(_, _ uint16) error                       { return nil }
