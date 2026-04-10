@@ -24,7 +24,6 @@ const (
 	EnvEgressPolicyFile = "OPENSANDBOX_EGRESS_POLICY_FILE" // optional JSON snapshot; if present and valid, overrides EnvEgressRules at startup
 	EnvEgressLogLevel   = "OPENSANDBOX_EGRESS_LOG_LEVEL"
 	EnvMaxEgressRules   = "OPENSANDBOX_EGRESS_MAX_RULES" // max egress rules for POST/PATCH; 0 = unlimited; empty = default
-	EnvMaxNameservers   = "OPENSANDBOX_EGRESS_MAX_NS"
 	EnvBlockedWebhook   = "OPENSANDBOX_EGRESS_DENY_WEBHOOK"
 	ENVSandboxID        = "OPENSANDBOX_EGRESS_SANDBOX_ID"
 	// EnvEgressMetricsExtraAttrs optional comma-separated key=value pairs appended to every egress OTLP metric datapoint (first '=' splits key/value per segment).
@@ -32,6 +31,12 @@ const (
 
 	// EnvNameserverExempt comma-separated IPs; proxy upstream to these is not marked and is allowed in nft allow set
 	EnvNameserverExempt = "OPENSANDBOX_EGRESS_NAMESERVER_EXEMPT"
+
+	// EnvDNSUpstream comma-separated upstream resolvers; each address must be a literal IPv4/IPv6 (optional :port). Hostnames are rejected (DNS recursion via REDIRECT).
+	EnvDNSUpstream                 = "OPENSANDBOX_EGRESS_DNS_UPSTREAM"
+	EnvDNSUpstreamTimeout          = "OPENSANDBOX_EGRESS_DNS_UPSTREAM_TIMEOUT"
+	EnvDNSUpstreamProbe            = "OPENSANDBOX_EGRESS_DNS_UPSTREAM_PROBE"
+	EnvDNSUpstreamProbeIntervalSec = "OPENSANDBOX_EGRESS_DNS_UPSTREAM_PROBE_INTERVAL_SEC"
 )
 
 const (
@@ -40,7 +45,8 @@ const (
 )
 
 const (
-	DefaultEgressServerAddr = ":18080"
-	DefaultMaxNameservers   = 3
-	DefaultMaxEgressRules   = 4096
+	DefaultEgressServerAddr      = ":18080"
+	ResolvNameserverCap          = 10
+	DefaultMaxEgressRules        = 4096
+	DefaultDNSUpstreamTimeoutSec = 5
 )
