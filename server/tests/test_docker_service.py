@@ -1127,7 +1127,8 @@ def test_create_and_start_container_windows_profile_keeps_image_entrypoint(mock_
     mock_client.api.create_container.return_value = {"Id": "cid"}
 
     created_container = MagicMock()
-    created_container.image.attrs = {"Os": "windows", "Architecture": "amd64"}
+    # dockurr/windows image metadata is linux/*, but request platform is windows/*.
+    created_container.image.attrs = {"Os": "linux", "Architecture": "amd64"}
     mock_client.containers.get.return_value = created_container
 
     service = DockerSandboxService(config=_app_config())
@@ -1162,7 +1163,7 @@ def test_create_and_start_container_windows_profile_skips_linux_runtime_injectio
     mock_client.api.create_container.return_value = {"Id": "cid"}
 
     created_container = MagicMock()
-    created_container.image.attrs = {"Os": "windows", "Architecture": "amd64"}
+    created_container.image.attrs = {"Os": "linux", "Architecture": "amd64"}
     mock_client.containers.get.return_value = created_container
 
     service = DockerSandboxService(config=_app_config())

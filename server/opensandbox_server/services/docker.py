@@ -2345,7 +2345,7 @@ class DockerSandboxService(DockerDiagnosticsMixin, OSSFSMixin, SandboxService, E
                 labels,
                 include_runtime_metadata=True,
             )
-            if is_windows_platform(runtime_platform):
+            if requested_windows_platform:
                 install_bat_bytes = fetch_execd_install_bat(
                     docker_client=self.docker_client,
                     execd_image=self.execd_image,
