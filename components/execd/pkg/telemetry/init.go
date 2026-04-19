@@ -117,6 +117,37 @@ func registerExecdMetrics() error {
 			return nil
 		}),
 	)
+	if err != nil {
+		return err
+	}
+
+	_, err = meter.Int64ObservableCounter(
+		"execd.system.network.io.bytes",
+		metric.WithDescription("System network IO bytes by direction"),
+		metric.WithUnit("By"),
+		metric.WithInt64Callback(func(ctx context.Context, obs metric.Int64Observer) error {
+			inBytes, outBytes := systemNetworkIOBytes()
+			base := append([]attribute.KeyValue{}, execdSharedAttrs()...)
+			obs.Observe(inBytes, metric.WithAttributes(append(base, attribute.String("direction", "in"))...))
+			obs.Observe(outBytes, metric.WithAttributes(append(base, attribute.String("direction", "out"))...))
+			return nil
+		}),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = meter.Int64ObservableGauge(
+		"execd.system.network.connections.active",
+		metric.WithDescription("Current active network connections by protocol"),
+		metric.WithInt64Callback(func(ctx context.Context, obs metric.Int64Observer) error {
+			tcpCount, udpCount := systemNetworkConnectionCounts()
+			base := append([]attribute.KeyValue{}, execdSharedAttrs()...)
+			obs.Observe(tcpCount, metric.WithAttributes(append(base, attribute.String("protocol", "tcp"))...))
+			obs.Observe(udpCount, metric.WithAttributes(append(base, attribute.String("protocol", "udp"))...))
+			return nil
+		}),
+	)
 	return err
 }
 

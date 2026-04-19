@@ -19,6 +19,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/attribute"
 
 	inttelemetry "github.com/alibaba/opensandbox/internal/telemetry"
@@ -27,13 +28,8 @@ import (
 func TestNormalizeRoute(t *testing.T) {
 	t.Parallel()
 
-	if got := normalizeRoute(""); got != "unknown" {
-		t.Fatalf("normalizeRoute(\"\") = %q, want %q", got, "unknown")
-	}
-
-	if got := normalizeRoute("/code/contexts/:contextId"); got != "/code/contexts/:contextId" {
-		t.Fatalf("normalizeRoute(route) = %q, want %q", got, "/code/contexts/:contextId")
-	}
+	assert.Equal(t, "unknown", normalizeRoute(""))
+	assert.Equal(t, "/code/contexts/:contextId", normalizeRoute("/code/contexts/:contextId"))
 }
 
 func TestRecordHTTPRequestWithoutInit(t *testing.T) {
@@ -45,15 +41,15 @@ func TestRecordHTTPRequestWithoutInit(t *testing.T) {
 func TestSystemMetricsReaders(t *testing.T) {
 	t.Parallel()
 
-	if got := systemProcessCount(); got < 0 {
-		t.Fatalf("systemProcessCount() = %d, want >= 0", got)
-	}
-	if got := systemCPUUsagePercent(); got < 0 {
-		t.Fatalf("systemCPUUsagePercent() = %f, want >= 0", got)
-	}
-	if got := systemMemoryUsageBytes(); got < 0 {
-		t.Fatalf("systemMemoryUsageBytes() = %d, want >= 0", got)
-	}
+	assert.GreaterOrEqual(t, systemProcessCount(), int64(0))
+	assert.GreaterOrEqual(t, systemCPUUsagePercent(), 0.0)
+	assert.GreaterOrEqual(t, systemMemoryUsageBytes(), int64(0))
+	inBytes, outBytes := systemNetworkIOBytes()
+	assert.GreaterOrEqual(t, inBytes, int64(0))
+	assert.GreaterOrEqual(t, outBytes, int64(0))
+	tcpCount, udpCount := systemNetworkConnectionCounts()
+	assert.GreaterOrEqual(t, tcpCount, int64(0))
+	assert.GreaterOrEqual(t, udpCount, int64(0))
 }
 
 func TestExecdSharedAttrs(t *testing.T) {
@@ -71,7 +67,5 @@ func TestExecdSharedAttrs(t *testing.T) {
 	t.Cleanup(func() { execdSharedAttrs = orig })
 
 	attrs := execdSharedAttrs()
-	if len(attrs) != 3 {
-		t.Fatalf("attrs len = %d, want 3", len(attrs))
-	}
+	assert.Len(t, attrs, 3)
 }

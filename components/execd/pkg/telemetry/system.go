@@ -17,6 +17,7 @@ package telemetry
 import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
+	gopsnet "github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -42,4 +43,24 @@ func systemMemoryUsageBytes() int64 {
 		return 0
 	}
 	return int64(stats.Used)
+}
+
+func systemNetworkIOBytes() (inBytes int64, outBytes int64) {
+	counters, err := gopsnet.IOCounters(false)
+	if err != nil || len(counters) == 0 {
+		return 0, 0
+	}
+	return int64(counters[0].BytesRecv), int64(counters[0].BytesSent)
+}
+
+func systemNetworkConnectionCounts() (tcpCount int64, udpCount int64) {
+	tcp, err := gopsnet.Connections("tcp")
+	if err == nil {
+		tcpCount = int64(len(tcp))
+	}
+	udp, err := gopsnet.Connections("udp")
+	if err == nil {
+		udpCount = int64(len(udp))
+	}
+	return tcpCount, udpCount
 }
