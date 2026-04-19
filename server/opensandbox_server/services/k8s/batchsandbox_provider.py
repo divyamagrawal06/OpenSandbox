@@ -72,7 +72,7 @@ class BatchSandboxProvider(WorkloadProvider):
         k8s_config = app_config.kubernetes if app_config else None
         template_file_path = k8s_config.batchsandbox_template_file if k8s_config else None
         if template_file_path:
-            logger.info("Using BatchSandbox template file: %s", template_file_path)
+            logger.info(f"Using BatchSandbox template file: {template_file_path}")
         self.execd_init_resources = k8s_config.execd_init_resources if k8s_config else None
 
         self.resolver = SecureRuntimeResolver(app_config) if app_config else None
@@ -166,7 +166,6 @@ class BatchSandboxProvider(WorkloadProvider):
             entrypoint=entrypoint,
             env=env,
             resource_limits=resource_limits,
-            include_execd_volume=True,
             has_network_policy=network_policy is not None,
         )
         
@@ -259,9 +258,9 @@ class BatchSandboxProvider(WorkloadProvider):
             )
             try:
                 self.k8s_client.create_secret(namespace=namespace, body=secret)
-                logger.info("Created imagePullSecret for sandbox %s", sandbox_id)
+                logger.info(f"Created imagePullSecret for sandbox {sandbox_id}")
             except Exception:
-                logger.warning("Failed to create imagePullSecret for sandbox %s, rolling back BatchSandbox", sandbox_id)
+                logger.warning(f"Failed to create imagePullSecret for sandbox {sandbox_id}, rolling back BatchSandbox")
                 try:
                     self.k8s_client.delete_custom_object(
                         group=self.group,
@@ -272,7 +271,7 @@ class BatchSandboxProvider(WorkloadProvider):
                         grace_period_seconds=0,
                     )
                 except Exception as del_exc:
-                    logger.warning("Failed to rollback BatchSandbox %s: %s", sandbox_id, del_exc)
+                    logger.warning(f"Failed to rollback BatchSandbox {sandbox_id}: {del_exc}")
                 raise
 
         return {
@@ -516,7 +515,7 @@ class BatchSandboxProvider(WorkloadProvider):
         try:
             return datetime.fromisoformat(expire_time_str.replace('Z', '+00:00'))
         except (ValueError, TypeError) as e:
-            logger.warning("Invalid expireTime format: %s, error: %s", expire_time_str, e)
+            logger.warning(f"Invalid expireTime format: {expire_time_str}, error: {e}")
             return None
 
     def _parse_pod_ip(self, workload: Dict[str, Any]) -> Optional[str]:
