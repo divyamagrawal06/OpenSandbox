@@ -62,7 +62,7 @@ class TestSandboxManagerE2ESync:
                 timeout=timedelta(minutes=5),
                 ready_timeout=timedelta(seconds=60),
                 metadata={"tag": tag, "team": "t1", "env": "prod"},
-                env={"E2E_TEST": "true", "CASE": "mgr-s1"},
+                env={"E2E_TEST": "true", "EXECD_API_GRACE_SHUTDOWN": "3s", "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s", "CASE": "mgr-s1"},
                 health_check_polling_interval=timedelta(milliseconds=500),
             )
             s2 = SandboxSync.create(
@@ -72,7 +72,7 @@ class TestSandboxManagerE2ESync:
                 timeout=timedelta(minutes=5),
                 ready_timeout=timedelta(seconds=60),
                 metadata={"tag": tag, "team": "t1", "env": "dev"},
-                env={"E2E_TEST": "true", "CASE": "mgr-s2"},
+                env={"E2E_TEST": "true", "EXECD_API_GRACE_SHUTDOWN": "3s", "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s", "CASE": "mgr-s2"},
                 health_check_polling_interval=timedelta(milliseconds=500),
             )
             s3 = SandboxSync.create(
@@ -82,7 +82,7 @@ class TestSandboxManagerE2ESync:
                 timeout=timedelta(minutes=5),
                 ready_timeout=timedelta(seconds=60),
                 metadata={"tag": tag, "env": "prod"},
-                env={"E2E_TEST": "true", "CASE": "mgr-s3"},
+                env={"E2E_TEST": "true", "EXECD_API_GRACE_SHUTDOWN": "3s", "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s", "CASE": "mgr-s3"},
                 health_check_polling_interval=timedelta(milliseconds=500),
             )
 
@@ -170,7 +170,7 @@ class TestSandboxManagerE2ESync:
                 timeout=timedelta(minutes=5),
                 ready_timeout=timedelta(seconds=60),
                 metadata={"tag": tag, "team": "t1", "env": "prod"},
-                env={"E2E_TEST": "true", "CASE": "mgr-s1"},
+                env={"E2E_TEST": "true", "EXECD_API_GRACE_SHUTDOWN": "3s", "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s", "CASE": "mgr-s1"},
                 health_check_polling_interval=timedelta(milliseconds=500),
             )
             s2 = SandboxSync.create(
@@ -180,7 +180,7 @@ class TestSandboxManagerE2ESync:
                 timeout=timedelta(minutes=5),
                 ready_timeout=timedelta(seconds=60),
                 metadata={"tag": tag, "team": "t1", "env": "dev"},
-                env={"E2E_TEST": "true", "CASE": "mgr-s2"},
+                env={"E2E_TEST": "true", "EXECD_API_GRACE_SHUTDOWN": "3s", "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s", "CASE": "mgr-s2"},
                 health_check_polling_interval=timedelta(milliseconds=500),
             )
             s3 = SandboxSync.create(
@@ -190,7 +190,7 @@ class TestSandboxManagerE2ESync:
                 timeout=timedelta(minutes=5),
                 ready_timeout=timedelta(seconds=60),
                 metadata={"tag": tag, "env": "prod"},
-                env={"E2E_TEST": "true", "CASE": "mgr-s3"},
+                env={"E2E_TEST": "true", "EXECD_API_GRACE_SHUTDOWN": "3s", "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s", "CASE": "mgr-s3"},
                 health_check_polling_interval=timedelta(milliseconds=500),
             )
 

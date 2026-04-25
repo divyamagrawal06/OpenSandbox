@@ -116,7 +116,8 @@ class TestSandboxManagerE2E:
             connection_config=cls.connection_config,
             image=get_sandbox_image(),
             metadata={"tag": cls.tag, "team": "t1", "env": "prod"},
-            env={"E2E_TEST": "true", "CASE": "mgr-s1"},
+            env={"E2E_TEST": "true", "CASE": "mgr-s1", "EXECD_API_GRACE_SHUTDOWN": "3s",
+                "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s"},
             timeout=timedelta(minutes=5),
             ready_timeout=timedelta(seconds=60),
         )
@@ -124,7 +125,8 @@ class TestSandboxManagerE2E:
             connection_config=cls.connection_config,
             image=get_sandbox_image(),
             metadata={"tag": cls.tag, "team": "t1", "env": "dev"},
-            env={"E2E_TEST": "true", "CASE": "mgr-s2"},
+            env={"E2E_TEST": "true", "CASE": "mgr-s2", "EXECD_API_GRACE_SHUTDOWN": "3s",
+                "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s"},
             timeout=timedelta(minutes=5),
             ready_timeout=timedelta(seconds=60),
         )
@@ -132,7 +134,8 @@ class TestSandboxManagerE2E:
             connection_config=cls.connection_config,
             image=get_sandbox_image(),
             metadata={"tag": cls.tag, "env": "prod"},
-            env={"E2E_TEST": "true", "CASE": "mgr-s3"},
+            env={"E2E_TEST": "true", "CASE": "mgr-s3", "EXECD_API_GRACE_SHUTDOWN": "3s",
+                "EXECD_JUPYTER_IDLE_POLL_INTERVAL": "1s"},
             timeout=timedelta(minutes=5),
             ready_timeout=timedelta(seconds=60),
         )
