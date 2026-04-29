@@ -31,13 +31,11 @@ jobs:
               }
               const s = [];
 
-              // 文档
               if (dirs.has("docs") || dirs.has("oseps") || dirs.has("specs") ||
                   dirs.has("examples")) {
                 s.push("documentation");
               }
 
-              // 组件
               if (dirs.has("components/egress")) s.push("component/egress");
               if (dirs.has("components/ingress")) s.push("component/ingress");
               if (dirs.has("components/execd")) s.push("component/execd");
