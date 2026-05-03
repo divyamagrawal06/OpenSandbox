@@ -407,3 +407,21 @@ def test_load_config_without_storage_block_uses_defaults(tmp_path, monkeypatch):
     loaded = config_module.load_config(config_path)
     assert loaded.storage is not None
     assert loaded.storage.allowed_host_paths == []
+
+
+def test_console_mount_path_rejects_reserved_prefixes():
+    server_cfg = ServerConfig()
+    runtime_cfg = RuntimeConfig(type="docker", execd_image="busybox:latest")
+    with pytest.raises(ValueError):
+        AppConfig(server=server_cfg, runtime=runtime_cfg, console={"mount_path": "/v1"})
+    with pytest.raises(ValueError):
+        AppConfig(server=server_cfg, runtime=runtime_cfg, console={"mount_path": "/sandboxes"})
+    with pytest.raises(ValueError):
+        AppConfig(server=server_cfg, runtime=runtime_cfg, console={"mount_path": "/"})
+
+
+def test_console_mount_path_allows_custom_non_api_path():
+    server_cfg = ServerConfig()
+    runtime_cfg = RuntimeConfig(type="docker", execd_image="busybox:latest")
+    app_cfg = AppConfig(server=server_cfg, runtime=runtime_cfg, console={"mount_path": "/console-ui"})
+    assert app_cfg.console.mount_path == "/console-ui"
