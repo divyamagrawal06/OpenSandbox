@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 
 from src.api import lifecycle
 from src.api.schema import RenewSandboxExpirationResponse
+from tests.test_helpers import minimal_sandbox
 
 
 def test_renew_expiration_returns_updated_timestamp(
@@ -30,6 +31,10 @@ def test_renew_expiration_returns_updated_timestamp(
     calls: list[tuple[str, datetime]] = []
 
     class StubService:
+        @staticmethod
+        def get_sandbox(sandbox_id: str):
+            return minimal_sandbox(sandbox_id)
+
         @staticmethod
         def renew_expiration(sandbox_id: str, request) -> RenewSandboxExpirationResponse:
             calls.append((sandbox_id, request.expires_at))
@@ -68,6 +73,10 @@ def test_renew_expiration_propagates_service_http_error(
     monkeypatch,
 ) -> None:
     class StubService:
+        @staticmethod
+        def get_sandbox(sandbox_id: str):
+            return minimal_sandbox(sandbox_id)
+
         @staticmethod
         def renew_expiration(sandbox_id: str, request) -> RenewSandboxExpirationResponse:
             raise HTTPException(

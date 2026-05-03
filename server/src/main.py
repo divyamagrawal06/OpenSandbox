@@ -113,6 +113,21 @@ app.add_middleware(RequestIdMiddleware)
 app.include_router(router)
 app.include_router(router, prefix="/v1")
 
+# Optional static hosting of the developer console (OSEP-0006)
+if app_config.console.enabled:
+    from pathlib import Path
+
+    from starlette.staticfiles import StaticFiles
+
+    _console_dist = Path(__file__).resolve().parent.parent.parent / "console" / "dist"
+    if _console_dist.is_dir():
+        _mount = app_config.console.mount_path.rstrip("/") or "/console"
+        app.mount(
+            _mount,
+            StaticFiles(directory=str(_console_dist), html=True),
+            name="console",
+        )
+
 DEFAULT_ERROR_CODE = "GENERAL::UNKNOWN_ERROR"
 DEFAULT_ERROR_MESSAGE = "An unexpected error occurred."
 

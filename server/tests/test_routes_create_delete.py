@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 
 from src.api import lifecycle
 from src.api.schema import CreateSandboxResponse, SandboxStatus
+from tests.test_helpers import minimal_sandbox
 
 
 def test_create_sandbox_returns_202_and_service_payload(
@@ -81,6 +82,10 @@ def test_delete_sandbox_returns_204_and_calls_service(
     calls: list[str] = []
 
     class StubService:
+        @staticmethod
+        def get_sandbox(sandbox_id: str):
+            return minimal_sandbox(sandbox_id)
+
         @staticmethod
         def delete_sandbox(sandbox_id: str) -> None:
             calls.append(sandbox_id)

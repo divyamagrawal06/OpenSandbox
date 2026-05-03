@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 
 from src.api import lifecycle
 from src.api.schema import Endpoint
+from tests.test_helpers import minimal_sandbox
 
 
 def test_get_endpoint_returns_service_result(
@@ -26,6 +27,10 @@ def test_get_endpoint_returns_service_result(
     calls: list[tuple[str, int]] = []
 
     class StubService:
+        @staticmethod
+        def get_sandbox(sandbox_id: str):
+            return minimal_sandbox(sandbox_id)
+
         @staticmethod
         def get_endpoint(sandbox_id: str, port: int) -> Endpoint:
             calls.append((sandbox_id, port))
@@ -49,6 +54,10 @@ def test_get_endpoint_use_server_proxy_rewrites_url(
     monkeypatch,
 ) -> None:
     class StubService:
+        @staticmethod
+        def get_sandbox(sandbox_id: str):
+            return minimal_sandbox(sandbox_id)
+
         @staticmethod
         def get_endpoint(sandbox_id: str, port: int) -> Endpoint:
             return Endpoint(endpoint="10.57.1.91:40109/proxy/44772")
