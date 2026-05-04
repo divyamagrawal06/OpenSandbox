@@ -270,3 +270,8 @@ generated/
 **/generated/**
 bin/
 obj/
+
+# Developer console build output (optional static mount)
+console/dist/
+console/output/
+console/playwright-report/
