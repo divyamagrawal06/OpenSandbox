@@ -153,6 +153,40 @@ app.include_router(devops_router, prefix="/v1")
 app.include_router(pool_router, prefix="/v1")
 app.include_router(proxy_router, prefix="/v1")
 
+# Optional static hosting of the developer console (OSEP-0006)
+if app_config.console.enabled:
+    from pathlib import Path
+
+    from starlette.exceptions import HTTPException as _StarletteHTTPException
+    from starlette.staticfiles import StaticFiles
+
+    class _SPAStaticFiles(StaticFiles):
+        """Serve index.html for unknown paths so BrowserRouter client-side routes work."""
+
+        async def get_response(self, path: str, scope):
+            try:
+                return await super().get_response(path, scope)
+            except _StarletteHTTPException as exc:
+                if exc.status_code == 404:
+                    return await super().get_response("index.html", scope)
+                raise
+
+    _console_dist = Path(__file__).resolve().parent.parent.parent / "console" / "dist"
+    if _console_dist.is_dir():
+        _mount = app_config.console.mount_path.rstrip("/") or "/console"
+        app.mount(
+            _mount,
+            _SPAStaticFiles(directory=str(_console_dist), html=True),
+            name="console",
+        )
+    else:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "console.enabled = true but console/dist was not found at %s; "
+            "the console will not be served. Run 'npm run build' in the console/ directory.",
+            _console_dist,
+        )
+
 DEFAULT_ERROR_CODE = "GENERAL::UNKNOWN_ERROR"
 DEFAULT_ERROR_MESSAGE = "An unexpected error occurred."
 
