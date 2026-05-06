@@ -680,6 +680,7 @@ async def renew_sandbox_expiration(
     },
 )
 async def create_snapshot(
+    http_request: Request,
     sandbox_id: str,
     response: Response,
     request: Optional[CreateSnapshotRequest] = None,
@@ -688,12 +689,55 @@ async def create_snapshot(
     """
     Create a persistent point-in-time snapshot from a sandbox.
     """
-    create_request = request or CreateSnapshotRequest()
-    snapshot = await asyncio.to_thread(
-        snapshot_service.create_snapshot,
-        sandbox_id,
-        create_request,
+    cfg = get_config()
+    principal = get_principal(http_request)
+    authorize_mutating_action(
+        http_request,
+        principal,
+        LifecycleAction.CREATE_SNAPSHOT,
+        owner_key=cfg.authz.owner_metadata_key,
+        team_key=cfg.authz.team_metadata_key,
+        sandbox_id=sandbox_id,
     )
+    box = sandbox_service.get_sandbox(sandbox_id)
+    authorize_mutating_action(
+        http_request,
+        principal,
+        LifecycleAction.CREATE_SNAPSHOT,
+        owner_key=cfg.authz.owner_metadata_key,
+        team_key=cfg.authz.team_metadata_key,
+        sandbox_id=sandbox_id,
+        sandbox=box,
+    )
+    create_request = request or CreateSnapshotRequest()
+    try:
+        snapshot = await asyncio.to_thread(
+            snapshot_service.create_snapshot,
+            sandbox_id,
+            create_request,
+        )
+        log_mutation_audit(
+            http_request, action=LifecycleAction.CREATE_SNAPSHOT, sandbox_id=sandbox_id, outcome="success"
+        )
+    except HTTPException as exc:
+        err = exc.detail
+        log_mutation_audit(
+            http_request,
+            action=LifecycleAction.CREATE_SNAPSHOT,
+            sandbox_id=sandbox_id,
+            outcome="error",
+            error_code=err.get("code") if isinstance(err, dict) else None,
+        )
+        raise
+    except Exception:
+        log_mutation_audit(
+            http_request,
+            action=LifecycleAction.CREATE_SNAPSHOT,
+            sandbox_id=sandbox_id,
+            outcome="error",
+            error_code="UNEXPECTED",
+        )
+        raise
     response.headers["Location"] = f"/v1/snapshots/{snapshot.id}"
     return snapshot
 
@@ -711,6 +755,7 @@ async def create_snapshot(
     },
 )
 async def list_snapshots(
+    http_request: Request,
     sandbox_id: Optional[str] = Query(None, alias="sandboxId", description="Filter snapshots by source sandbox identifier"),
     state: Optional[List[str]] = Query(None, description="Filter by snapshot lifecycle state. Pass multiple times for OR logic."),
     page: int = Query(1, ge=1, description="Page number for pagination"),
@@ -720,6 +765,14 @@ async def list_snapshots(
     """
     List snapshots with optional filtering and pagination.
     """
+    cfg = get_config()
+    principal = get_principal(http_request)
+    authorize_action(
+        principal,
+        LifecycleAction.LIST_SNAPSHOTS,
+        owner_key=cfg.authz.owner_metadata_key,
+        team_key=cfg.authz.team_metadata_key,
+    )
     request = ListSnapshotsRequest(
         filter=SnapshotFilter(sandboxId=sandbox_id, state=state),
         pagination=PaginationRequest(page=page, pageSize=page_size),
@@ -742,12 +795,21 @@ async def list_snapshots(
     },
 )
 async def get_snapshot(
+    http_request: Request,
     snapshot_id: str,
     x_request_id: Optional[str] = Header(None, alias="X-Request-ID", description="Unique request identifier for tracing"),
 ) -> Snapshot:
     """
     Fetch a snapshot by id.
     """
+    cfg = get_config()
+    principal = get_principal(http_request)
+    authorize_action(
+        principal,
+        LifecycleAction.GET_SNAPSHOT,
+        owner_key=cfg.authz.owner_metadata_key,
+        team_key=cfg.authz.team_metadata_key,
+    )
     return snapshot_service.get_snapshot(snapshot_id)
 
 
@@ -766,13 +828,47 @@ async def get_snapshot(
     },
 )
 async def delete_snapshot(
+    http_request: Request,
     snapshot_id: str,
     x_request_id: Optional[str] = Header(None, alias="X-Request-ID", description="Unique request identifier for tracing"),
 ) -> Response:
     """
     Delete a snapshot by id.
     """
-    snapshot_service.delete_snapshot(snapshot_id)
+    cfg = get_config()
+    principal = get_principal(http_request)
+    authorize_mutating_action(
+        http_request,
+        principal,
+        LifecycleAction.DELETE_SNAPSHOT,
+        owner_key=cfg.authz.owner_metadata_key,
+        team_key=cfg.authz.team_metadata_key,
+        sandbox_id=None,
+    )
+    try:
+        snapshot_service.delete_snapshot(snapshot_id)
+        log_mutation_audit(
+            http_request, action=LifecycleAction.DELETE_SNAPSHOT, sandbox_id=None, outcome="success"
+        )
+    except HTTPException as exc:
+        err = exc.detail
+        log_mutation_audit(
+            http_request,
+            action=LifecycleAction.DELETE_SNAPSHOT,
+            sandbox_id=None,
+            outcome="error",
+            error_code=err.get("code") if isinstance(err, dict) else None,
+        )
+        raise
+    except Exception:
+        log_mutation_audit(
+            http_request,
+            action=LifecycleAction.DELETE_SNAPSHOT,
+            sandbox_id=None,
+            outcome="error",
+            error_code="UNEXPECTED",
+        )
+        raise
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

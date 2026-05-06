@@ -157,14 +157,26 @@ app.include_router(proxy_router, prefix="/v1")
 if app_config.console.enabled:
     from pathlib import Path
 
+    from starlette.exceptions import HTTPException as _StarletteHTTPException
     from starlette.staticfiles import StaticFiles
+
+    class _SPAStaticFiles(StaticFiles):
+        """Serve index.html for unknown paths so BrowserRouter client-side routes work."""
+
+        async def get_response(self, path: str, scope):
+            try:
+                return await super().get_response(path, scope)
+            except _StarletteHTTPException as exc:
+                if exc.status_code == 404:
+                    return await super().get_response("index.html", scope)
+                raise
 
     _console_dist = Path(__file__).resolve().parent.parent.parent / "console" / "dist"
     if _console_dist.is_dir():
         _mount = app_config.console.mount_path.rstrip("/") or "/console"
         app.mount(
             _mount,
-            StaticFiles(directory=str(_console_dist), html=True),
+            _SPAStaticFiles(directory=str(_console_dist), html=True),
             name="console",
         )
 

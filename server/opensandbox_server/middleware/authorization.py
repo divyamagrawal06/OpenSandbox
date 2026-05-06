@@ -35,12 +35,18 @@ class LifecycleAction:
     DELETE = "delete_sandbox"
     PAUSE = "pause_sandbox"
     RESUME = "resume_sandbox"
+    LIST_SNAPSHOTS = "list_snapshots"
+    GET_SNAPSHOT = "get_snapshot"
+    CREATE_SNAPSHOT = "create_snapshot"
+    DELETE_SNAPSHOT = "delete_snapshot"
 
 
 _READ_ONLY = {
     LifecycleAction.LIST_SANDBOXES,
     LifecycleAction.GET_SANDBOX,
     LifecycleAction.GET_ENDPOINT,
+    LifecycleAction.LIST_SNAPSHOTS,
+    LifecycleAction.GET_SNAPSHOT,
 }
 _OPERATOR = _READ_ONLY | {
     LifecycleAction.CREATE,
@@ -48,6 +54,8 @@ _OPERATOR = _READ_ONLY | {
     LifecycleAction.DELETE,
     LifecycleAction.PAUSE,
     LifecycleAction.RESUME,
+    LifecycleAction.CREATE_SNAPSHOT,
+    LifecycleAction.DELETE_SNAPSHOT,
 }
 
 
